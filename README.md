@@ -1,1 +1,1 @@
-# devrev-openai-codegen-codex
+# Test Repo for DevRev Hackathon
