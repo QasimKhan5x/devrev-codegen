@@ -20,7 +20,7 @@ def get_code(prompt, **kwargs):
         "top_p": 1.0,
         "max_tokens": 256,
     }
-    # set default value if not present in kwarfs
+    # set default value if not present in kwargs
     for k, v in default_kwargs.items():
         if k not in kwargs:
             kwargs[k] = v
