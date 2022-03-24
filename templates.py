@@ -493,6 +493,57 @@ def code2ut(function, language):
     return code
 
 
+'''
+Code Completion
+
+**Template 1**
+"""Complete the following piece of code for <task>"""
+<code>
+
+**Template 2**
+"""Complete the following function"""
+<docstring for non-python>
+<function header>
+<docstring for python>
+<code>?
+'''
+
+
+def get_code_completion_template(code, task=''):
+    code_parts = code.split()
+    if '/**' in code_parts[0]:
+        docstring = code_parts[0] + "\n"
+        i = 1
+        while '*/' not in code_parts[i]:
+            docstring += code_parts[i]
+            i += 1
+        docstring += code_parts[i] + "\n"
+        function_code = code_parts[i+1:]
+        template = '"""Complete the following function"""\n'
+        template += docstring
+        template += function_code
+    else:
+        if '"""' in code_parts[1] or "'''" in code_parts[1]:
+            template = '"""Complete the following function"""'
+            template += code
+        else:
+            template = f'"""Complete the following piece of code for {task}"""\n'
+            template += code
+    return template
+
+
+def complete_code(code, task=''):
+    prompt = get_code_completion_template(code, task)
+    if task == '':
+        print("WARNING: Task not provided. Resulting code may not be accurate")
+        temperature = 0.8
+    else:
+        temperature = 0.2
+    code = get_code(prompt, temperature=temperature, max_tokens=256, frequency_penalty=0.8,
+                    presence_penalty=0.4, stop=['\n\n\n', '"""'])
+    return code
+
+
 def send_code_request(task, **kwargs):
     tasks = {
         'api': get_api_request_code,
@@ -502,9 +553,12 @@ def send_code_request(task, **kwargs):
         'fixbugs': fix_bugs,
         'code2doc': code2docstring,
         'oneliner': get_oneliner,
-        'ut': code2ut
+        'ut': code2ut,
+        'complete': complete_code,
     }
     if task in tasks:
         return tasks[task](**kwargs)
     else:
-        return 'ERROR: Task does not exist'
+        print('WARNING: Task does not exist! Using prompt as input to Codex')
+        return get_code(task, temperature=0.6, frequency_penalty=0.8, presence_penalty=0.4,
+                        max_tokens=512, stop=['\n\n\n'])
