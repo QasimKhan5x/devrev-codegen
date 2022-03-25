@@ -1,2 +1,4 @@
 openai==0.15.0
 python-dotenv==0.19.2
+torch>=1.10
+sentence-transformers>=2.2
