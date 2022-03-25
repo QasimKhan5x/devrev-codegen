@@ -146,7 +146,7 @@ Create a <SQL Engine> query to <task>
 """
 
 
-def get_sql_explanation_template(table_names, col_names, task, sql_engine="MySQL"):
+def get_sql_generation_template(table_names, col_names, task, sql_engine="MySQL"):
     if len(table_names) < 1:
         print("ERROR: table_names must contain atleast one table")
         return ''
@@ -165,7 +165,8 @@ def get_sql_explanation_template(table_names, col_names, task, sql_engine="MySQL
 
 
 def nl2sql(table_names, col_names, task, sql_engine="MySQL"):
-    template = get_sql_explanation_template(table_names, col_names, task)
+    template = get_sql_generation_template(
+        table_names, col_names, task, sql_engine)
     sql = get_code(template, max_tokens=256, temperature=0.2,
                    stop=['#', '\n\n', ';', '"""'], best_of=3)
     sql = "SELECT" + sql
@@ -234,7 +235,7 @@ def get_code2nl_template(code, language):
 
 def code2nl(code, language):
     prompt = get_code2nl_template(code, language)
-    return get_code(prompt, temperature=0.3, max_tokens=128, frequency_penalty=0.2, stop=['"""'])
+    return get_code(prompt, temperature=0.3, max_tokens=2048, frequency_penalty=0.2, stop=['"""', '*/'])
 
 
 """Bug Fixing
@@ -550,6 +551,7 @@ def send_code_request(task, **kwargs):
         'sql2nl': sql2nl,
         'nl2sql': nl2sql,
         'code2nl': code2nl,
+        'error_explain': get_error_explanation, 
         'fixbugs': fix_bugs,
         'code2doc': code2docstring,
         'oneliner': get_oneliner,
