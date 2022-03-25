@@ -20,7 +20,7 @@ prompt2task = {
 corpus = list(prompt2task.keys())
 
 embedder = SentenceTransformer('all-MiniLM-L6-v2')
-corpus_embeddings = torch.load(corpus_embeddings, torch.device('cpu'))
+corpus_embeddings = torch.load('embeddings.pt', torch.device('cpu'))
 
 
 def get_most_similar(query, corpus_embeddings, top_k):
@@ -59,7 +59,7 @@ def get_task_from_hits(hits, corpus):
 
 def get_task_from_query(query, top_k=3, threshold=0.5):
     '''
-    Pass a query string and the corpus_embeddings.pt file
+    Pass a query string
     Get a list of the tasks that may have been intended in the query
     '''
     global corpus_embeddings
