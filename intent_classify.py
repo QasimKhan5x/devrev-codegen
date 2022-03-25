@@ -61,7 +61,7 @@ def get_task_from_query(query, corpus_embeddings, top_k=3, threshold=0.5):
     Pass a query string and the corpus_embeddings.pt file
     Get a list of the tasks that may have been intended in the query
     '''
-    corpus_embeddings = torch.load(corpus_embeddings, map_location='cpu')
+    corpus_embeddings = torch.load(corpus_embeddings, torch.device('cpu'))
     hits = get_most_similar(query, corpus_embeddings, top_k)
     hits_above_thresh = filter_hits(hits, threshold)
     list_of_tasks = get_task_from_hits(hits_above_thresh)
