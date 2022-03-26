@@ -14,6 +14,11 @@ def get_comment(language, ml=True):
             return ('"""', '"""')
         else:
             return '#'
+    elif language.lower() == 'matlab':
+        if ml:
+            return ('%{', '%}')
+        else:
+            return '%'
     else:
         if ml:
             return ('/*', '*/')
@@ -551,7 +556,7 @@ def send_code_request(task, **kwargs):
         'sql2nl': sql2nl,
         'nl2sql': nl2sql,
         'code2nl': code2nl,
-        'error_explain': get_error_explanation, 
+        'error_explain': get_error_explanation,
         'fixbugs': fix_bugs,
         'code2doc': code2docstring,
         'oneliner': get_oneliner,
