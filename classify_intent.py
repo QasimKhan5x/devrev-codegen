@@ -1,4 +1,5 @@
 import argparse
+
 import torch
 from sentence_transformers import SentenceTransformer, util
 
@@ -55,7 +56,7 @@ def get_task_from_hits(hits, corpus):
         prompt = corpus[corpus_id]
         task = prompt2task[prompt]
         tasks.add(task)
-    return list(task)
+    return list(tasks)
 
 
 def get_task_from_query(query, top_k=3, threshold=0.5):
@@ -68,6 +69,7 @@ def get_task_from_query(query, top_k=3, threshold=0.5):
     hits_above_thresh = filter_hits(hits, threshold)
     list_of_tasks = get_task_from_hits(hits_above_thresh)
     return list_of_tasks
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Get the task(s) for a query')
