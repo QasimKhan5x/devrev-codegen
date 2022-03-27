@@ -50,3 +50,25 @@ def get_code(prompt, get_fn_reason=False, **kwargs):
             return code, finish_reason
         else:
             return code
+
+def iteratively_request_code(prompt, **kwargs):
+    '''Request Codex for code until finish_reason == stop'''
+    code, fn_reason = get_code(prompt, get_fn_reason=True, **kwargs)
+    # iteratively send requests
+    if fn_reason == "length":
+        num_reqs = 0
+        # max_tokens for resend is capped at 64
+        kwargs['max_tokens'] = 64
+        # get the length of the template to strip it off later
+        initial_length = len(prompt)
+        # send no more than 10 reqs due to usage limits
+        while fn_reason == "length" and num_reqs < 10:
+            prompt += code
+            code, fn_reason = get_code(prompt, get_fn_reason=True, **kwargs)
+            num_reqs += 1
+        # add the last part
+        prompt += code
+        # remove the template
+        return prompt[initial_length:]
+    # return original code
+    return code
