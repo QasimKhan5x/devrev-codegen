@@ -8,7 +8,7 @@ load_dotenv()  # take environment variables from .env.
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
-def get_code(prompt, **kwargs):
+def get_code(prompt, get_fn_reason=False, **kwargs):
     '''
     Useful parameters
         - temperature/top_p

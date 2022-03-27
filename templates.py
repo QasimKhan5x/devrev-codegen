@@ -289,7 +289,7 @@ It is recommended that the function has a docstring
 """
 
 
-def get_fix_bugs_template(function, language):
+def get_fix_bugs_template(function, language, get_fn_header=False):
     function = function.strip()
     parts = function.split('\n')
     header = parts[0]
@@ -310,7 +310,10 @@ def get_fix_bugs_template(function, language):
     template += header
     if docstring:
         template += f"\n{docstring}"
-    return template
+    if get_fn_header:
+        return template, header
+    else:
+        return template
 
 
 def fix_bugs(function, language):
@@ -325,7 +328,7 @@ def fix_bugs(function, language):
         if '//' not in function:
             stop.append('//')
         template = f'# {language}\n'
-    template = get_fix_bugs_template(function, language)
+    template, fn_header = get_fix_bugs_template(function, language, True)
     temperature = 0
     code = get_code(template, max_tokens=512, frequency_penalty=0.4,
                     temperature=temperature, stop=stop, best_of=3)
@@ -333,7 +336,8 @@ def fix_bugs(function, language):
         temperature += 0.1
         code = get_code(template, max_tokens=512, frequency_penalty=0.4,
                         temperature=temperature, stop=stop, best_of=3)
-    return code
+    fixed_code = fn_header + "\n" + code
+    return fixed_code
 
 
 """## Write Comments/Docstring for Code
