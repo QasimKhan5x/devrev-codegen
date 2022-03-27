@@ -34,14 +34,19 @@ def get_code(prompt, get_fn_reason=False, **kwargs):
     )
     if 'n' in kwargs:
         codes = []
-        for code in result["choices"]:
-            code = code["text"].split("\n")
-            code = list(filter(lambda x: x != '', code))
-            code = "\n".join(code)
-            codes.append(code)
+        # [(code, finish_reason)]
+        for item in result["choices"]:
+            finish_reason = item['finish_reason']
+            code = item["text"]
+            if get_fn_reason:
+                codes.append((code, finish_reason))
+            else:
+                codes.append(code)
         return codes
     else:
-        code = result["choices"][0]["text"].split("\n")
-        code = list(filter(lambda x: x != '', code))
-        code = "\n".join(code)
-        return code
+        finish_reason = result['choices'][0]['finish_reason']
+        code = result["choices"][0]["text"]
+        if get_fn_reason:
+            return code, finish_reason
+        else:
+            return code
