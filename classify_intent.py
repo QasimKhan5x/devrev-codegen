@@ -82,6 +82,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Get the task(s) for a query')
     parser.add_argument('query', type=str, help='the query string')
     args = parser.parse_args()
-    print(args.query)
     tasks = get_task_from_query(args.query)
     print(tasks)

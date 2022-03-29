@@ -576,5 +576,5 @@ def send_code_request(task, **kwargs):
         return tasks[task](**kwargs)
     else:
         print('WARNING: Task does not exist! Using prompt as input to Codex')
-        return get_code(task, temperature=0.8, frequency_penalty=1, presence_penalty=0.5,
-                        max_tokens=512, stop=['\n\n\n', '"""'], best_of=5)
+        return iteratively_request_code(task, temperature=0.4, frequency_penalty=1, presence_penalty=0.5,
+                                        max_tokens=512, stop=['\n\n\n', '"""'], best_of=5)
