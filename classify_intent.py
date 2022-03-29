@@ -21,8 +21,10 @@ prompt2task = {
 # Corpus with example sentences
 corpus = list(prompt2task.keys())
 
-embedder = SentenceTransformer('all-MiniLM-L6-v2')
-corpus_embeddings = torch.load('embeddings.pt', torch.device('cpu'))
+device = torch.device(
+    'cuda') if torch.cuda.is_available() else torch.device('cpu')
+embedder = SentenceTransformer('all-MiniLM-L6-v2').to(device)
+corpus_embeddings = torch.load('embeddings.pt', device)
 
 
 def get_most_similar(query, corpus_embeddings, top_k):
@@ -30,7 +32,7 @@ def get_most_similar(query, corpus_embeddings, top_k):
     Get the embeddings in the corpus that are most similar to
     the query string
     '''
-    query_embedding = embedder.encode(query, convert_to_tensor=True)
+    query_embedding = embedder.encode(query, convert_to_tensor=True).to(device)
     # Find the closest top_k sentences of the corpus for each query sentence based on cosine similarity
     hits = util.semantic_search(
         query_embedding, corpus_embeddings, top_k=top_k)
@@ -65,9 +67,10 @@ def get_task_from_query(query, top_k=3, threshold=0.5):
     Get a list of the tasks that may have been intended in the query
     '''
     global corpus_embeddings
+    global corpus
     hits = get_most_similar(query, corpus_embeddings, top_k)
     hits_above_thresh = filter_hits(hits, threshold)
-    list_of_tasks = get_task_from_hits(hits_above_thresh)
+    list_of_tasks = get_task_from_hits(hits_above_thresh, corpus)
     return list_of_tasks
 
 
@@ -75,5 +78,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Get the task(s) for a query')
     parser.add_argument('query', type=str, help='the query string')
     args = parser.parse_args()
+    print(args.query)
     tasks = get_task_from_query(args.query)
     print(tasks)
