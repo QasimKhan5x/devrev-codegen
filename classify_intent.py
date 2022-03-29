@@ -24,7 +24,7 @@ corpus = list(prompt2task.keys())
 device = torch.device(
     'cuda') if torch.cuda.is_available() else torch.device('cpu')
 embedder = SentenceTransformer('all-MiniLM-L6-v2').to(device)
-corpus_embeddings = torch.load('embeddings.pt', device)
+corpus_embeddings = torch.load('intent_embeddings.pt', device)
 
 
 def get_most_similar(query, corpus_embeddings, top_k):
@@ -32,10 +32,14 @@ def get_most_similar(query, corpus_embeddings, top_k):
     Get the embeddings in the corpus that are most similar to
     the query string
     '''
-    query_embedding = embedder.encode(query, convert_to_tensor=True).to(device)
+    with torch.no_grad():
+        query_embedding = embedder.encode(
+            query, convert_to_tensor=True).to(device)
     # Find the closest top_k sentences of the corpus for each query sentence based on cosine similarity
     hits = util.semantic_search(
         query_embedding, corpus_embeddings, top_k=top_k)
+    # free gpu memory
+    torch.cuda.empty_cache()
     # Get the hits for the first query
     hits = hits[0]
     return hits
