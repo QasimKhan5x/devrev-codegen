@@ -1,18 +1,18 @@
 import argparse
-# import itertools
-# import os
-# import pickle
-# import re
+import itertools
+import os
+import pickle
+import re
 
-# import torch
-# from sentence_transformers.util import semantic_search
-# from transformers import RobertaModel, RobertaTokenizer
+import torch
+from sentence_transformers.util import semantic_search
+from transformers import RobertaModel, RobertaTokenizer
 
-# weights = '/content/drive/MyDrive/devrev'
-# device = torch.device(
-#     'cuda') if torch.cuda.is_available() else torch.device('cpu')
-# search_tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
-# search_model = RobertaModel.from_pretrained(weights).to(device)
+weights = '/content/drive/MyDrive/devrev'
+device = torch.device(
+    'cuda') if torch.cuda.is_available() else torch.device('cpu')
+search_tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
+search_model = RobertaModel.from_pretrained(weights).to(device)
 
 def create_embeddings(input_json, seq_length):
     '''Create code embeddings for user code base'''
