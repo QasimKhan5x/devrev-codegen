@@ -1,19 +1,18 @@
 import argparse
-import itertools
-import os
-import pickle
-import re
+# import itertools
+# import os
+# import pickle
+# import re
 
-import torch
-from sentence_transformers.util import semantic_search
-from transformers import RobertaModel, RobertaTokenizer
+# import torch
+# from sentence_transformers.util import semantic_search
+# from transformers import RobertaModel, RobertaTokenizer
 
-weights = './codebert'
-device = torch.device(
-    'cuda') if torch.cuda.is_available() else torch.device('cpu')
-search_tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
-search_model = RobertaModel.from_pretrained(weights).to(device)
-
+# weights = '/content/drive/MyDrive/devrev'
+# device = torch.device(
+#     'cuda') if torch.cuda.is_available() else torch.device('cpu')
+# search_tokenizer = RobertaTokenizer.from_pretrained("microsoft/codebert-base")
+# search_model = RobertaModel.from_pretrained(weights).to(device)
 
 def create_embeddings(input_json, seq_length):
     '''Create code embeddings for user code base'''
@@ -49,23 +48,20 @@ def create_embeddings(input_json, seq_length):
             code_embeddings = torch.cat((code_embeddings, code_vec), 0)
     torch.save(code_embeddings, "code_embeddings.pt")
     # save tokenized.pkl
-    # with open("tokenized.pkl", "wb") as f:
-    #     pickle.dump(segments, f)
+    with open("all_code_segments.pkl", "wb") as f:
+        pickle.dump(all_code_segments_2d, f)
     # free memory
     del code_embeddings
     del segments
+    del all_code_segments_2d
     torch.cuda.empty_cache()
 
-
-def remove_special_tokens(string):
-    return re.sub(r'<\S+>', '', string)
-
-
-def get_most_similar(query, code_embeddings, top_k):
+def get_most_similar(query, top_k):
     '''
     Get the embeddings in the code embedddings
     that are most similar to the query string
     '''
+    code_embeddings = torch.load("./code_embeddings.pt", map_location=device)
     global search_model
     query_tokens = search_tokenizer.encode(
         query, return_tensors="pt").to(device)
@@ -76,7 +72,6 @@ def get_most_similar(query, code_embeddings, top_k):
     hits = hits[0]
     return hits
 
-
 def filter_hits(hits, threshold):
     '''Keep only those hits that are >= threshold'''
     new_hits = []
@@ -85,50 +80,46 @@ def filter_hits(hits, threshold):
             new_hits.append(hit)
     return new_hits
 
+def remove_special_tokens(string):
+    return re.sub(r'<\S+>', '', string)
 
-def get_code_with_filepath_from_hits(hits):
-    '''Get the corresponding code & its filepath from the most similar hits'''
-    global file2code_segments
-    global all_code_segments
+
+def get_code_from_hits(hits):
+    '''Get the corresponding code from the most similar hit(s)'''
     global search_tokenizer
     code_and_filepaths = list()
-    for hit in hits:
-        # the index inside the corpus
-        code_segment_index = hit['corpus_id']
-        # the tokens list for this code segment
-        code_segment_tokens = all_code_segments[code_segment_index]
-        for fp in file2code_segments:
-            # the list of code segments in this file
-            code_segments = file2code_segments[fp]
-            if code_segment_tokens in code_segments:
-                # the original code segment
-                code_segment = search_tokenizer.decode(code_segment_tokens)
-                code_segment = remove_special_tokens(code_segment)
-                code_and_filepaths.append({
-                    "fp": fp,
-                    "code": code_segment
-                })
-    return code_and_filepaths
+    # just get the first one
+    hit = hits[0]
+    # the index inside the corpus
+    code_segment_index = hit['corpus_id']
+    # get the list of all code segments
+    with open("all_code_segments.pkl", "rb") as f:
+        all_code_segments = pickle.load(f)
+    # the tokens list for this code segment
+    code_segment_tokens = all_code_segments[code_segment_index]
+    # free memory
+    del all_code_segments
+    # the original code segment
+    code_segment = search_tokenizer.decode(code_segment_tokens)
+    # remove special tokens
+    code_segment = remove_special_tokens(code_segment)
+    return code_segment
 
 
-def search_for_code(query, top_k=3, threshold=0.5):
+def search_for_code(query, top_k=1, threshold=0.4, input_json=None):
     '''
     Pass a query string
     Return a JSON array with intended code and its filepath
     '''
-    if not os.path.exists("code_embeddings.pt"):
-        create_embeddings(search_tokenizer.model_max_length, seq_length=256)
-    hits = get_most_similar(query, code_embeddings, top_k)
+    # Create embeddings if they don't exist
+    global search_tokenizer
+    if not os.path.exists("./code_embeddings.pt"):
+        if input_json != None:
+            create_embeddings(input_json, seq_length=search_tokenizer.model_max_length)
+        else:
+            print("ERROR: EMBEDDINGS DO NOT EXIST")
+            return ''
+    hits = get_most_similar(query, top_k)
     hits_above_thresh = filter_hits(hits, threshold)
-    code_and_filepath = get_code_with_filepath_from_hits(hits_above_thresh)
-    return code_and_filepath
-
-
-if __name__ == "__main__":
-    if not os.path.exists("code_embeddings.pt"):
-        create_embeddings(search_tokenizer.model_max_length, seq_length=256)
-    parser = argparse.ArgumentParser(description='Get the task(s) for a query')
-    parser.add_argument('query', type=str, help='the query string')
-    args = parser.parse_args()
-    tasks = get_task_from_query(args.query)
-    print(tasks)
+    code_segment = get_code_from_hits(hits_above_thresh)
+    return code_segment
